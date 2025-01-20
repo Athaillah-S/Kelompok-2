@@ -1,39 +1,40 @@
-void loop() {
+#include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
+#include <UniversalTelegramBot.h>
 
-  state = analogRead(sensorPin);
-//  Serial.println(state);
-  if(state < 500) {
-      
-      if ((WiFi.status() == WL_CONNECTED)) { //Check the current connection status
-     
-        HTTPClient http;
-     
-        int nilai = random(29,37);
-        String data = (String) nilai;
-//        String link = "-" + state;
-        String link = "-" + account_sid + "&auth_token="+ auth_token +"&to_wa=" + to + "&from_wa="+ from +"&body_message=" + body;
-        
-        http.begin(link);
-        int httpCode = http.GET();
-        Serial.println(httpCode);
-        
-        if (httpCode > 0) { //Check for the returning code
-            
-            String payload = http.getString();
-            Serial.println(link);
-            Serial.println(httpCode);
-            Serial.println(payload);
-        }
-        else {
-            Serial.println("Error on HTTP request");
-        }
-        http.end();
-      }
-      digitalWrite(speakerPin, HIGH);
-      delay(3000);
-      digitalWrite(speakerPin, LOW);
-      delay(1000);
+// konfigurasi WiFi
+const char* ssid = "masukan nama wifi"; //Ganti dengan nama wifi kalian
+const char* password = "masukan password wifi"; // paswword wifi kalian
+
+// bot Telegram
+#define BOT_TOKEN "masukkan token bot " //token bot telegram "wadah pesan"
+#define CHAT_ID "masukan id telegram" //id telegram agar dapat mengirim pesan ke pengguna
+
+WiFiClientSecure client;
+UniversalTelegramBot bot(BOT_TOKEN, client); 
+
+// **Konfigurasi pin**
+const int sensorPin = D5; //pin sensor infrared
+const int buzzerPin = D6; //pin buzzer atau alarm
+int lastSensorState = HIGH; //status awal sensor (pintu tertutup/tidak ada objek)
+void setup() {
+  Serial.begin(115200);
+  pinMode(sensorPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  digitalWrite(buzzerPin, LOW);
+
+  // Koneksi WiFi
+  Serial.print("Menghubungkan ke WiFi...");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
   }
-  delay(200);
- 
+  Serial.println(" Terhubung!");
+
+  // Koneksi aman untuk Telegram
+  client.setInsecure(); 
+
+  // Notifikasi awal
+  bot.sendMessage(CHAT_ID, "Sistem Sensor Pintu Aktif", "");
 }
